@@ -1,0 +1,18 @@
+{
+  "uuid": "2927541a-ec49-4535-87ce-20613388cf8e",
+  "shortName": "pebble-color-polar-clock",
+  "longName": "pebble-color-polar-clock",
+  "companyName": "Lond",
+  "versionLabel": "1.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["aplite", "basalt"],
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}
