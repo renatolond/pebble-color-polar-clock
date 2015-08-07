@@ -7,7 +7,6 @@
 #include <time.h>
 
 static Window *s_main_window;
-static TextLayer *s_time_layer;
 
 const GPathInfo SECOND_SEGMENT_PATH_POINTS = {
 	.num_points = 3,
@@ -44,6 +43,20 @@ Layer *minute_display_layer;
 
 GPath *hour_segment_path;
 Layer *hour_display_layer;
+
+//int window_x, window_y;
+
+#define HOUR_X 31
+#define HOUR_Y 50
+#define HOUR_W 55
+#define HOUR_H 50
+TextLayer *s_hour_layer;
+
+#define MINUTE_X 88
+#define MINUTE_Y 60
+#define MINUTE_W 55
+#define MINUTE_H 50
+TextLayer *s_minute_layer;
 
 static int angle_90 = TRIG_MAX_ANGLE / 4;
 static int angle_180 = TRIG_MAX_ANGLE / 2;
@@ -294,9 +307,15 @@ void hour_display_layer_update_callback(Layer *me, GContext* ctx) {
 	graphics_context_set_fill_color(ctx, GColorBlack);
 	graphics_fill_circle(ctx, center, hourCircleInnerRadius);
 	graphics_draw_arc(ctx, center, hourCircleOuterRadius+1, HOURS_CIRCLE_THICKNESS+2, hour_a1, hour_a2, GColorBlack);
+
+	graphics_context_set_stroke_color(ctx, front);
+//	graphics_draw_line(ctx, GPoint(window_x, 0), GPoint(window_x,window_y));
 }
 
 static void main_window_load(Window *window) {
+//	window_x = (layer_get_frame(window_get_root_layer(window)).size.w / 2) + 15;
+//	window_y = layer_get_frame(window_get_root_layer(window)).size.h;
+
 	// Init the layer for the second display
 	second_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
 	GRect temp = layer_get_frame(second_display_layer);
@@ -317,11 +336,25 @@ static void main_window_load(Window *window) {
 	gpath_move_to(hour_segment_path, grect_center_point(&temp));
 	layer_set_update_proc(hour_display_layer, &hour_display_layer_update_callback);
 	layer_add_child(window_get_root_layer(window), hour_display_layer);
+
+	s_hour_layer = text_layer_create(GRect(HOUR_X, HOUR_Y, HOUR_W, HOUR_H));
+	text_layer_set_background_color(s_hour_layer, GColorClear);
+	text_layer_set_text_color(s_hour_layer, GColorWhite);
+	text_layer_set_font(s_hour_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
+	text_layer_set_text_alignment(s_hour_layer, GTextAlignmentRight);
+	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_hour_layer));
+
+	s_minute_layer = text_layer_create(GRect(MINUTE_X, MINUTE_Y, MINUTE_W, MINUTE_H));
+	text_layer_set_background_color(s_minute_layer, GColorClear);
+	text_layer_set_text_color(s_minute_layer, GColorWhite);
+	text_layer_set_font(s_minute_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+	text_layer_set_text_alignment(s_minute_layer, GTextAlignmentLeft);
+	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_minute_layer));
 }
 
 static void main_window_unload(Window *window) {
 	// Destroy TextLayer
-	text_layer_destroy(s_time_layer);
+	text_layer_destroy(s_minute_layer);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -333,6 +366,35 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	layer_mark_dirty(second_display_layer);
 	layer_mark_dirty(minute_display_layer);
 	layer_mark_dirty(hour_display_layer);
+
+	static char buffer[] = "00";
+	strftime(buffer, sizeof("00"), "%H", t);
+#ifdef PBL_COLOR
+	int index = t->tm_hour;
+	if(!clock_is_24h_style()) {
+		index = index * 2;
+	}
+
+	GColor front_hour = (GColor8){.argb=colors_hours[t->tm_hour]};
+	text_layer_set_text_color(s_hour_layer, front_hour);
+#else
+	text_layer_set_text_color(s_hour_layer, GColorWhite);
+#endif
+	text_layer_set_text(s_hour_layer, buffer);
+
+	static char buffer_mins[] = "00";
+	//static int dd = 0;
+	strftime(buffer_mins, sizeof("00"), "%M", t);
+	//snprintf(buffer_mins,sizeof("00"), "%0d", dd);
+	//dd++;
+	//if(dd > 59) dd = 0;
+#ifdef PBL_COLOR
+	GColor front = (GColor8){.argb=colors[t->tm_min]};
+	text_layer_set_text_color(s_minute_layer, front);
+#else
+	text_layer_set_text_color(s_minute_layer, GColorWhite);
+#endif
+	text_layer_set_text(s_minute_layer, buffer_mins);
 }
 
 static void initRadii(void) {
