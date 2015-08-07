@@ -55,7 +55,6 @@ static uint8_t colors[NBR_COLORS] = {GColorVividCeruleanARGB8, GColorVividCerule
 #endif
 
 static int32_t sec_a, sec_a1, sec_a2, hour_a, hour_a1, hour_a2;
-static int32_t minutesWidth = TRIG_MAX_ANGLE / 60;
 static int32_t hourWidth = TRIG_MAX_ANGLE / 24;
 
 /*\
@@ -175,14 +174,9 @@ static void graphics_draw_arc(GContext *ctx, GPoint center, int radius, int thic
 	}
 }
 static void calcAngles(struct tm *t) {
-	if(t->tm_sec == 59) {
-		sec_a1 = 0;
-		sec_a2 = TRIG_MAX_ANGLE;
-	} else {
-		sec_a = TRIG_MAX_ANGLE * t->tm_sec / 60 - angle_90;
-		sec_a2 = -angle_90;
-		sec_a1 = sec_a + minutesWidth;
-	}
+	sec_a = TRIG_MAX_ANGLE * t->tm_sec / 60 - angle_90;
+	sec_a2 = -angle_90;
+	sec_a1 = sec_a;
 
 	hour_a = TRIG_MAX_ANGLE * (60*(t->tm_hour%12)+t->tm_min) / 720 - angle_90;
 	hour_a1 = hour_a - hourWidth;
@@ -237,6 +231,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 static void init() {
 	// Create main Window element and assign to pointer
 	s_main_window = window_create();
+	window_set_background_color(s_main_window, GColorBlack);
 
 	second_segment_path = gpath_create(&SECOND_SEGMENT_PATH_POINTS);
 
