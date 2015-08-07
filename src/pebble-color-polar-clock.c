@@ -35,8 +35,8 @@ const GPathInfo HOUR_SEGMENT_PATH_POINTS = {
 	}
 };
 
-GPath *second_segment_path;
-Layer *second_display_layer;
+//GPath *second_segment_path;
+//Layer *second_display_layer;
 
 GPath *minute_segment_path;
 Layer *minute_display_layer;
@@ -47,13 +47,13 @@ Layer *hour_display_layer;
 //int window_x, window_y;
 
 #define HOUR_X 31
-#define HOUR_Y 50
+#define HOUR_Y 56
 #define HOUR_W 55
 #define HOUR_H 50
 TextLayer *s_hour_layer;
 
 #define MINUTE_X 88
-#define MINUTE_Y 60
+#define MINUTE_Y 66
 #define MINUTE_W 55
 #define MINUTE_H 50
 TextLayer *s_minute_layer;
@@ -224,9 +224,9 @@ static void graphics_draw_arc(GContext *ctx, GPoint center, int radius, int thic
 	}
 }
 static void calcAngles(struct tm *t) {
-	seconds_a = TRIG_MAX_ANGLE * t->tm_sec / 60 - angle_90;
-	seconds_a2 = -angle_90;
-	seconds_a1 = seconds_a;
+//	seconds_a = TRIG_MAX_ANGLE * t->tm_sec / 60 - angle_90;
+//	seconds_a2 = -angle_90;
+//	seconds_a1 = seconds_a;
 
 	minutes_a = TRIG_MAX_ANGLE * t->tm_min / 60 - angle_90;
 	minutes_a2 = -angle_90;
@@ -241,26 +241,26 @@ static void calcAngles(struct tm *t) {
 	hour_a2 = -angle_90;
 }
 
-void second_display_layer_update_callback(Layer *me, GContext* ctx) {
-	GRect rect = layer_get_frame(me);
-	GPoint center = grect_center_point(&rect);
-
-#ifdef PBL_COLOR
-	time_t temp = time(NULL);
-	struct tm *t = localtime(&temp);
-	GColor front = (GColor8){.argb=colors[t->tm_sec]};
-#else
-	GColor front = GColorWhite;
-#endif
-
-	graphics_context_set_fill_color(ctx, front);
-
-	graphics_fill_circle(ctx, center, secondsCircleOuterRadius);
-
-	graphics_context_set_fill_color(ctx, GColorBlack);
-	graphics_fill_circle(ctx, center, secondsCircleInnerRadius);
-	graphics_draw_arc(ctx, center, secondsCircleOuterRadius+1, SECONDS_CIRCLE_THICKNESS+2, seconds_a1, seconds_a2, GColorBlack);
-}
+//void second_display_layer_update_callback(Layer *me, GContext* ctx) {
+//	GRect rect = layer_get_frame(me);
+//	GPoint center = grect_center_point(&rect);
+//
+//#ifdef PBL_COLOR
+//	time_t temp = time(NULL);
+//	struct tm *t = localtime(&temp);
+//	GColor front = (GColor8){.argb=colors[t->tm_sec]};
+//#else
+//	GColor front = GColorWhite;
+//#endif
+//
+//	graphics_context_set_fill_color(ctx, front);
+//
+//	graphics_fill_circle(ctx, center, secondsCircleOuterRadius);
+//
+//	graphics_context_set_fill_color(ctx, GColorBlack);
+//	graphics_fill_circle(ctx, center, secondsCircleInnerRadius);
+//	graphics_draw_arc(ctx, center, secondsCircleOuterRadius+1, SECONDS_CIRCLE_THICKNESS+2, seconds_a1, seconds_a2, GColorBlack);
+//}
 
 void minute_display_layer_update_callback(Layer *me, GContext* ctx) {
 	GRect rect = layer_get_frame(me);
@@ -317,15 +317,15 @@ static void main_window_load(Window *window) {
 //	window_y = layer_get_frame(window_get_root_layer(window)).size.h;
 
 	// Init the layer for the second display
-	second_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
-	GRect temp = layer_get_frame(second_display_layer);
-	gpath_move_to(second_segment_path, grect_center_point(&temp));
-	layer_set_update_proc(second_display_layer, &second_display_layer_update_callback);
-	layer_add_child(window_get_root_layer(window), second_display_layer);
+	//second_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
+	//GRect temp = layer_get_frame(second_display_layer);
+	//gpath_move_to(second_segment_path, grect_center_point(&temp));
+	//layer_set_update_proc(second_display_layer, &second_display_layer_update_callback);
+	//layer_add_child(window_get_root_layer(window), second_display_layer);
 
 	// Init the layer for the minute display
 	minute_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
-	temp = layer_get_frame(minute_display_layer);
+	GRect temp = layer_get_frame(minute_display_layer);
 	gpath_move_to(minute_segment_path, grect_center_point(&temp));
 	layer_set_update_proc(minute_display_layer, &minute_display_layer_update_callback);
 	layer_add_child(window_get_root_layer(window), minute_display_layer);
@@ -363,7 +363,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	struct tm *t = localtime(&temp);
 	calcAngles(t);
 
-	layer_mark_dirty(second_display_layer);
+//	layer_mark_dirty(second_display_layer);
 	layer_mark_dirty(minute_display_layer);
 	layer_mark_dirty(hour_display_layer);
 
@@ -412,7 +412,7 @@ static void init() {
 	s_main_window = window_create();
 	window_set_background_color(s_main_window, GColorBlack);
 
-	second_segment_path = gpath_create(&SECOND_SEGMENT_PATH_POINTS);
+//	second_segment_path = gpath_create(&SECOND_SEGMENT_PATH_POINTS);
 	minute_segment_path = gpath_create(&MINUTE_SEGMENT_PATH_POINTS);
 	hour_segment_path = gpath_create(&HOUR_SEGMENT_PATH_POINTS);
 
@@ -427,7 +427,7 @@ static void init() {
 	// Show the Window on the watch, with animated=true
 	window_stack_push(s_main_window, true);
 	// Register with TickTimerService
-	tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+	tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
 }
 
 static void deinit() {
