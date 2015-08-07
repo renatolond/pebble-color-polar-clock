@@ -10,24 +10,38 @@ static Window *s_main_window;
 static TextLayer *s_time_layer;
 
 const GPathInfo SECOND_SEGMENT_PATH_POINTS = {
-  .num_points = 3,
-  .points = (GPoint []) {
-    {0, 0},
-    {-7, -70}, // 70 = radius + fudge; 7 = 70*tan(6 degrees); 6 degrees per minute;
-    {7,  -70},
-  }
+	.num_points = 3,
+	.points = (GPoint []) {
+		{0, 0},
+		{-7, -70}, // 70 = radius + fudge; 7 = 70*tan(6 degrees); 6 degrees per second;
+		{7,  -70},
+	}
+};
+
+const GPathInfo MINUTE_SEGMENT_PATH_POINTS = {
+	.num_points = 3,
+	.points = (GPoint []) {
+		{0, 0},
+		{-7, -70}, // 70 = radius + fudge; 7 = 70*tan(6 degrees); 6 degrees per minute;
+		{7,  -70},
+	}
 };
 
 GPath *second_segment_path;
 Layer *second_display_layer;
 
+GPath *minute_segment_path;
+Layer *minute_display_layer;
+
 static int angle_90 = TRIG_MAX_ANGLE / 4;
 static int angle_180 = TRIG_MAX_ANGLE / 2;
 static int angle_270 = 3 * TRIG_MAX_ANGLE / 4;
 
-static int outerCircleOuterRadius = 71, outerCircleInnerRadius;
-#define OUTER_CIRCLE_THICKNESS 4
-
+static int secondsCircleOuterRadius = 71, secondsCircleInnerRadius,
+			minutesCircleOuterRadius, minutesCircleInnerRadius;
+#define SECONDS_CIRCLE_THICKNESS 4
+#define MINUTES_CIRCLE_THICKNESS 2
+#define CIRCLE_SPACE 5
 
 #ifdef PBL_COLOR
 #define NBR_COLORS 60
@@ -54,8 +68,7 @@ static uint8_t colors[NBR_COLORS] = {GColorTiffanyBlueARGB8, GColorTiffanyBlueAR
 };
 #endif
 
-static int32_t sec_a, sec_a1, sec_a2, hour_a, hour_a1, hour_a2;
-static int32_t hourWidth = TRIG_MAX_ANGLE / 24;
+static int32_t seconds_a, seconds_a1, seconds_a2, minutes_a, minutes_a1, minutes_a2;
 
 /*\
 |*| DrawArc function thanks to Cameron MacFarland (http://forums.getpebble.com/profile/12561/Cameron%20MacFarland)
@@ -174,26 +187,22 @@ static void graphics_draw_arc(GContext *ctx, GPoint center, int radius, int thic
 	}
 }
 static void calcAngles(struct tm *t) {
-	sec_a = TRIG_MAX_ANGLE * t->tm_sec / 60 - angle_90;
-	sec_a2 = -angle_90;
-	sec_a1 = sec_a;
+	seconds_a = TRIG_MAX_ANGLE * t->tm_sec / 60 - angle_90;
+	seconds_a2 = -angle_90;
+	seconds_a1 = seconds_a;
 
-	hour_a = TRIG_MAX_ANGLE * (60*(t->tm_hour%12)+t->tm_min) / 720 - angle_90;
-	hour_a1 = hour_a - hourWidth;
-	hour_a2 = hour_a + hourWidth;
+	minutes_a = TRIG_MAX_ANGLE * t->tm_min / 60 - angle_90;
+	minutes_a2 = -angle_90;
+	minutes_a1 = minutes_a;
 }
 
 void second_display_layer_update_callback(Layer *me, GContext* ctx) {
-	time_t temp = time(NULL);
-
-	struct tm *t = localtime(&temp);
-
 	GRect rect = layer_get_frame(me);
 	GPoint center = grect_center_point(&rect);
 
-	calcAngles(t);
-
 #ifdef PBL_COLOR
+	time_t temp = time(NULL);
+	struct tm *t = localtime(&temp);
 	GColor front = (GColor8){.argb=colors[t->tm_sec]};
 #else
 	GColor front = GColorWhite;
@@ -201,22 +210,48 @@ void second_display_layer_update_callback(Layer *me, GContext* ctx) {
 
 	graphics_context_set_fill_color(ctx, front);
 
-	graphics_fill_circle(ctx, center, outerCircleOuterRadius);
+	graphics_fill_circle(ctx, center, secondsCircleOuterRadius);
 
 	graphics_context_set_fill_color(ctx, GColorBlack);
-	graphics_fill_circle(ctx, center, outerCircleInnerRadius);
-	graphics_draw_arc(ctx, center, outerCircleOuterRadius+1, OUTER_CIRCLE_THICKNESS+2, sec_a1, sec_a2, GColorBlack);
+	graphics_fill_circle(ctx, center, secondsCircleInnerRadius);
+	graphics_draw_arc(ctx, center, secondsCircleOuterRadius+1, SECONDS_CIRCLE_THICKNESS+2, seconds_a1, seconds_a2, GColorBlack);
+}
+
+void minute_display_layer_update_callback(Layer *me, GContext* ctx) {
+	GRect rect = layer_get_frame(me);
+	GPoint center = grect_center_point(&rect);
+
+#ifdef PBL_COLOR
+	time_t temp = time(NULL);
+	struct tm *t = localtime(&temp);
+	GColor front = (GColor8){.argb=colors[t->tm_min]};
+#else
+	GColor front = GColorWhite;
+#endif
+
+	graphics_context_set_fill_color(ctx, front);
+
+	graphics_fill_circle(ctx, center, minutesCircleOuterRadius);
+
+	graphics_context_set_fill_color(ctx, GColorBlack);
+	graphics_fill_circle(ctx, center, minutesCircleInnerRadius);
+	graphics_draw_arc(ctx, center, minutesCircleOuterRadius+1, MINUTES_CIRCLE_THICKNESS+2, minutes_a1, minutes_a2, GColorBlack);
 }
 
 static void main_window_load(Window *window) {
-	outerCircleInnerRadius = outerCircleOuterRadius - OUTER_CIRCLE_THICKNESS;
-
 	// Init the layer for the second display
 	second_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
 	GRect temp = layer_get_frame(second_display_layer);
 	gpath_move_to(second_segment_path, grect_center_point(&temp));
 	layer_set_update_proc(second_display_layer, &second_display_layer_update_callback);
 	layer_add_child(window_get_root_layer(window), second_display_layer);
+
+	// Init the layer for the minute display
+	minute_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
+	temp = layer_get_frame(minute_display_layer);
+	gpath_move_to(minute_segment_path, grect_center_point(&temp));
+	layer_set_update_proc(minute_display_layer, &minute_display_layer_update_callback);
+	layer_add_child(window_get_root_layer(window), minute_display_layer);
 }
 
 static void main_window_unload(Window *window) {
@@ -225,7 +260,20 @@ static void main_window_unload(Window *window) {
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+	time_t temp = time(NULL);
+
+	struct tm *t = localtime(&temp);
+	calcAngles(t);
+
 	layer_mark_dirty(second_display_layer);
+	layer_mark_dirty(minute_display_layer);
+}
+
+static void initRadii(void) {
+	secondsCircleInnerRadius = secondsCircleOuterRadius - SECONDS_CIRCLE_THICKNESS;
+
+	minutesCircleOuterRadius = secondsCircleInnerRadius - CIRCLE_SPACE;
+	minutesCircleInnerRadius = minutesCircleOuterRadius - MINUTES_CIRCLE_THICKNESS;
 }
 
 static void init() {
@@ -234,6 +282,9 @@ static void init() {
 	window_set_background_color(s_main_window, GColorBlack);
 
 	second_segment_path = gpath_create(&SECOND_SEGMENT_PATH_POINTS);
+	minute_segment_path = gpath_create(&MINUTE_SEGMENT_PATH_POINTS);
+
+	initRadii();
 
 	// Set handlers to manage the elements inside the Window
 	window_set_window_handlers(s_main_window, (WindowHandlers) {
