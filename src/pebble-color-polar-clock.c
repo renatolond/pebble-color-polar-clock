@@ -353,8 +353,12 @@ static void main_window_load(Window *window) {
 }
 
 static void main_window_unload(Window *window) {
-	// Destroy TextLayer
+	// Destroy dinamically created stuff
+	//layer_destroy(second_display_layer);
+	layer_destroy(minute_display_layer);
+	layer_destroy(hour_display_layer);
 	text_layer_destroy(s_minute_layer);
+	text_layer_destroy(s_hour_layer);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -437,6 +441,8 @@ static void init() {
 static void deinit() {
 	// Destroy Window
 	window_destroy(s_main_window);
+	gpath_destroy(minute_segment_path);
+	gpath_destroy(hour_segment_path);
 }
 
 int main(void) {
