@@ -73,7 +73,7 @@ static int secondsCircleOuterRadius = 71, secondsCircleInnerRadius,
 #ifdef PBL_COLOR
 #define NBR_COLORS 60
 #define NBR_COLORS_HOURS 24
-static uint8_t colors[NBR_COLORS] = {GColorTiffanyBlueARGB8, GColorTiffanyBlueARGB8, GColorCobaltBlueARGB8,
+const uint8_t colors[NBR_COLORS] = {GColorTiffanyBlueARGB8, GColorTiffanyBlueARGB8, GColorCobaltBlueARGB8,
 	GColorCobaltBlueARGB8, GColorCobaltBlueARGB8, GColorVividCeruleanARGB8,
 	GColorBlueMoonARGB8, GColorBlueMoonARGB8, GColorBlueMoonARGB8,
 	GColorBlueARGB8, GColorBlueARGB8, GColorBlueARGB8,
@@ -94,7 +94,7 @@ static uint8_t colors[NBR_COLORS] = {GColorTiffanyBlueARGB8, GColorTiffanyBlueAR
 	GColorMalachiteARGB8, GColorMediumSpringGreenARGB8, GColorJaegerGreenARGB8,
 	GColorJaegerGreenARGB8, GColorJaegerGreenARGB8, GColorTiffanyBlueARGB8,
 };
-static uint8_t colors_hours[NBR_COLORS_HOURS] = {GColorTiffanyBlueARGB8, GColorCobaltBlueARGB8, GColorVividCeruleanARGB8,
+const uint8_t colors_hours[NBR_COLORS_HOURS] = {GColorTiffanyBlueARGB8, GColorCobaltBlueARGB8, GColorVividCeruleanARGB8,
 	GColorBlueMoonARGB8, GColorBlueARGB8, GColorElectricUltramarineARGB8,
 	GColorVividVioletARGB8, GColorIndigoARGB8, GColorPurpleARGB8,
 	GColorJazzberryJamARGB8, GColorFashionMagentaARGB8, GColorFollyARGB8,
