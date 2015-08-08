@@ -44,7 +44,11 @@ Layer *minute_display_layer;
 GPath *hour_segment_path;
 Layer *hour_display_layer;
 
-//int window_x, window_y;
+//#define SEE_VISUAL_MARKS 1
+
+#ifdef SEE_VISUAL_MARKS
+int window_x, window_y;
+#endif
 
 // Languages
 #define LANG_DUTCH 0
@@ -339,13 +343,19 @@ void hour_display_layer_update_callback(Layer *me, GContext* ctx) {
 	graphics_fill_circle(ctx, center, hourCircleInnerRadius);
 	graphics_draw_arc(ctx, center, hourCircleOuterRadius+1, HOURS_CIRCLE_THICKNESS+2, hour_a1, hour_a2, GColorBlack);
 
-	graphics_context_set_stroke_color(ctx, front);
-//	graphics_draw_line(ctx, GPoint(window_x, 0), GPoint(window_x,window_y));
+#ifdef SEE_VISUAL_MARKS
+	graphics_context_set_stroke_color(ctx, GColorWhite);
+	graphics_draw_line(ctx, GPoint((window_x/2), 0), GPoint((window_x/2),window_y));
+	graphics_draw_line(ctx, GPoint((window_x/2)+15, 0), GPoint((window_x/2)+15,window_y));
+	graphics_draw_line(ctx, GPoint(0, window_y/2), GPoint(window_x,window_y/2));
+#endif
 }
 
 static void main_window_load(Window *window) {
-//	window_x = (layer_get_frame(window_get_root_layer(window)).size.w / 2) + 15;
-//	window_y = layer_get_frame(window_get_root_layer(window)).size.h;
+#ifdef SEE_VISUAL_MARKS
+	window_x = (layer_get_frame(window_get_root_layer(window)).size.w);
+	window_y = layer_get_frame(window_get_root_layer(window)).size.h;
+#endif
 
 	// Init the layer for the second display
 	//second_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
