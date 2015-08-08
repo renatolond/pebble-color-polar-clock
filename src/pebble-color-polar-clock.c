@@ -82,9 +82,9 @@ static int angle_90 = TRIG_MAX_ANGLE / 4;
 static int angle_180 = TRIG_MAX_ANGLE / 2;
 static int angle_270 = 3 * TRIG_MAX_ANGLE / 4;
 
-static int secondsCircleOuterRadius = 71, secondsCircleInnerRadius,
-			minutesCircleOuterRadius, minutesCircleInnerRadius,
-			hourCircleOuterRadius, hourCircleInnerRadius;
+static int seconds_circle_outer_radius = 71, seconds_circle_inner_radius,
+			minutes_circle_outer_radius, minutes_circle_inner_radius,
+			hours_circle_outer_radius, hours_circle_inner_radius;
 #define SECONDS_CIRCLE_THICKNESS 4
 #define MINUTES_CIRCLE_THICKNESS 2
 #define HOURS_CIRCLE_THICKNESS 1
@@ -129,7 +129,7 @@ const uint8_t colors_weekdays[NBR_COLORS_WEEKDAYS] = {GColorTiffanyBlueARGB8, GC
 	GColorGreenARGB8,};
 #endif
 
-const char weekDay[LANG_MAX][7][6] = {
+const char weekdays[LANG_MAX][7][6] = {
 	{ "zon", "maa", "din", "woe", "don", "vri", "zat" },// Dutch
 	{ "sun", "mon", "tue", "wed", "thu", "fri", "sat" },// English
 	{ "dim", "lun", "mar", "mer", "jeu", "ven", "sam" },// French
@@ -138,9 +138,11 @@ const char weekDay[LANG_MAX][7][6] = {
 	{ "dom", "seg", "ter", "qua", "qui", "sex", "sab" },// Portuguese
 	{ "sön", "mån", "Tis", "ons", "tor", "fre", "lör" } // Swedish
 };
-static int curLang = LANG_ENGLISH;
+static int current_language = LANG_ENGLISH;
 
-static int32_t seconds_a, seconds_a1, seconds_a2, minutes_a, minutes_a1, minutes_a2, hour_a, hour_a1, hour_a2;
+//static int32_t seconds_a, seconds_a1, seconds_a2;
+static int32_t minutes_a, minutes_a1, minutes_a2;
+static int32_t hour_a, hour_a1, hour_a2;
 
 /*\
 |*| DrawArc function thanks to Cameron MacFarland (http://forums.getpebble.com/profile/12561/Cameron%20MacFarland)
@@ -258,7 +260,7 @@ static void graphics_draw_arc(GContext *ctx, GPoint center, int radius, int thic
 		}
 	}
 }
-static void calcAngles(struct tm *t) {
+static void calc_angles(struct tm *t) {
 //	seconds_a = TRIG_MAX_ANGLE * t->tm_sec / 60 - angle_90;
 //	seconds_a2 = -angle_90;
 //	seconds_a1 = seconds_a;
@@ -290,11 +292,11 @@ static void calcAngles(struct tm *t) {
 //
 //	graphics_context_set_fill_color(ctx, front);
 //
-//	graphics_fill_circle(ctx, center, secondsCircleOuterRadius);
+//	graphics_fill_circle(ctx, center, seconds_circle_outer_radius);
 //
 //	graphics_context_set_fill_color(ctx, GColorBlack);
-//	graphics_fill_circle(ctx, center, secondsCircleInnerRadius);
-//	graphics_draw_arc(ctx, center, secondsCircleOuterRadius+1, SECONDS_CIRCLE_THICKNESS+2, seconds_a1, seconds_a2, GColorBlack);
+//	graphics_fill_circle(ctx, center, seconds_circle_inner_radius);
+//	graphics_draw_arc(ctx, center, seconds_circle_outer_radius+1, SECONDS_CIRCLE_THICKNESS+2, seconds_a1, seconds_a2, GColorBlack);
 //}
 
 void minute_display_layer_update_callback(Layer *me, GContext* ctx) {
@@ -311,11 +313,11 @@ void minute_display_layer_update_callback(Layer *me, GContext* ctx) {
 
 	graphics_context_set_fill_color(ctx, front);
 
-	graphics_fill_circle(ctx, center, minutesCircleOuterRadius);
+	graphics_fill_circle(ctx, center, minutes_circle_outer_radius);
 
 	graphics_context_set_fill_color(ctx, GColorBlack);
-	graphics_fill_circle(ctx, center, minutesCircleInnerRadius);
-	graphics_draw_arc(ctx, center, minutesCircleOuterRadius+1, MINUTES_CIRCLE_THICKNESS+2, minutes_a1, minutes_a2, GColorBlack);
+	graphics_fill_circle(ctx, center, minutes_circle_inner_radius);
+	graphics_draw_arc(ctx, center, minutes_circle_outer_radius+1, MINUTES_CIRCLE_THICKNESS+2, minutes_a1, minutes_a2, GColorBlack);
 }
 
 void hour_display_layer_update_callback(Layer *me, GContext* ctx) {
@@ -337,11 +339,11 @@ void hour_display_layer_update_callback(Layer *me, GContext* ctx) {
 
 	graphics_context_set_fill_color(ctx, front);
 
-	graphics_fill_circle(ctx, center, hourCircleOuterRadius);
+	graphics_fill_circle(ctx, center, hours_circle_outer_radius);
 
 	graphics_context_set_fill_color(ctx, GColorBlack);
-	graphics_fill_circle(ctx, center, hourCircleInnerRadius);
-	graphics_draw_arc(ctx, center, hourCircleOuterRadius+1, HOURS_CIRCLE_THICKNESS+2, hour_a1, hour_a2, GColorBlack);
+	graphics_fill_circle(ctx, center, hours_circle_inner_radius);
+	graphics_draw_arc(ctx, center, hours_circle_outer_radius+1, HOURS_CIRCLE_THICKNESS+2, hour_a1, hour_a2, GColorBlack);
 
 #ifdef SEE_VISUAL_MARKS
 	graphics_context_set_stroke_color(ctx, GColorWhite);
@@ -409,19 +411,19 @@ static void main_window_unload(Window *window) {
 	text_layer_destroy(s_hour_layer);
 }
 
-void setWeekday(struct tm *t) {
-	static char weekdayBuffer[] = "fri";
-	snprintf(weekdayBuffer, sizeof(weekdayBuffer), "%s", weekDay[curLang][t->tm_wday]);
+void set_weekday(struct tm *t) {
+	static char weekday_buffer[] = "fri";
+	snprintf(weekday_buffer, sizeof(weekday_buffer), "%s", weekdays[current_language][t->tm_wday]);
 #ifdef PBL_COLOR
 	GColor front = (GColor8){.argb=colors_weekdays[t->tm_wday]};
 	text_layer_set_text_color(s_weekday_layer, front);
 #else
 	text_layer_set_text_color(s_weekday_layer, GColorWhite);
 #endif
-	text_layer_set_text(s_weekday_layer, weekdayBuffer);
+	text_layer_set_text(s_weekday_layer, weekday_buffer);
 }
 
-void setHourAndMinutes(struct tm *t) {
+void set_hour_and_minutes(struct tm *t) {
 	static char buffer[] = "00";
 	if(!clock_is_24h_style()) {
 		strftime(buffer, sizeof("00"), "%I", t);
@@ -460,24 +462,24 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	time_t temp = time(NULL);
 
 	struct tm *t = localtime(&temp);
-	calcAngles(t);
+	calc_angles(t);
 
 //	layer_mark_dirty(second_display_layer);
 	layer_mark_dirty(minute_display_layer);
 	layer_mark_dirty(hour_display_layer);
 
-	setHourAndMinutes(t);
-	setWeekday(t);
+	set_hour_and_minutes(t);
+	set_weekday(t);
 }
 
-static void initRadii(void) {
-	secondsCircleInnerRadius = secondsCircleOuterRadius - SECONDS_CIRCLE_THICKNESS;
+static void init_radii(void) {
+	seconds_circle_inner_radius = seconds_circle_outer_radius - SECONDS_CIRCLE_THICKNESS;
 
-	minutesCircleOuterRadius = secondsCircleInnerRadius - CIRCLE_SPACE;
-	minutesCircleInnerRadius = minutesCircleOuterRadius - MINUTES_CIRCLE_THICKNESS;
+	minutes_circle_outer_radius = seconds_circle_inner_radius - CIRCLE_SPACE;
+	minutes_circle_inner_radius = minutes_circle_outer_radius - MINUTES_CIRCLE_THICKNESS;
 
-	hourCircleOuterRadius = minutesCircleInnerRadius - CIRCLE_SPACE;
-	hourCircleInnerRadius = hourCircleOuterRadius - HOURS_CIRCLE_THICKNESS;
+	hours_circle_outer_radius = minutes_circle_inner_radius - CIRCLE_SPACE;
+	hours_circle_inner_radius = hours_circle_outer_radius - HOURS_CIRCLE_THICKNESS;
 }
 
 static void init() {
@@ -489,7 +491,7 @@ static void init() {
 	minute_segment_path = gpath_create(&MINUTE_SEGMENT_PATH_POINTS);
 	hour_segment_path = gpath_create(&HOUR_SEGMENT_PATH_POINTS);
 
-	initRadii();
+	init_radii();
 
 	// Set handlers to manage the elements inside the Window
 	window_set_window_handlers(s_main_window, (WindowHandlers) {
