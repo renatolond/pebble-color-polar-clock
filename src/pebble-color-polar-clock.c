@@ -78,6 +78,12 @@ TextLayer *s_minute_layer;
 #define WEEKDAY_H 50
 TextLayer *s_weekday_layer;
 
+#define DAY_AND_MONTH_X 22
+#define DAY_AND_MONTH_Y 93
+#define DAY_AND_MONTH_W 105
+#define DAY_AND_MONTH_H 50
+TextLayer *s_day_and_month_layer;
+
 static int angle_90 = TRIG_MAX_ANGLE / 4;
 static int angle_180 = TRIG_MAX_ANGLE / 2;
 static int angle_270 = 3 * TRIG_MAX_ANGLE / 4;
@@ -402,6 +408,13 @@ static void main_window_load(Window *window) {
 	text_layer_set_font(s_weekday_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
 	text_layer_set_text_alignment(s_weekday_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_weekday_layer));
+
+	s_day_and_month_layer = text_layer_create(GRect(DAY_AND_MONTH_X, DAY_AND_MONTH_Y, DAY_AND_MONTH_W, DAY_AND_MONTH_H));
+	text_layer_set_background_color(s_day_and_month_layer, GColorClear);
+	text_layer_set_text_color(s_day_and_month_layer, GColorWhite);
+	text_layer_set_font(s_day_and_month_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+	text_layer_set_text_alignment(s_day_and_month_layer, GTextAlignmentCenter);
+	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_and_month_layer));
 }
 
 static void main_window_unload(Window *window) {
@@ -411,6 +424,20 @@ static void main_window_unload(Window *window) {
 	layer_destroy(hour_display_layer);
 	text_layer_destroy(s_minute_layer);
 	text_layer_destroy(s_hour_layer);
+	text_layer_destroy(s_weekday_layer);
+	text_layer_destroy(s_day_and_month_layer);
+}
+
+void set_day_and_month(struct tm *t) {
+	static char day_and_month_buffer[] = "24 Mar";
+	strftime(day_and_month_buffer, sizeof(day_and_month_buffer), "%d %b", t);
+#ifdef PBL_COLOR
+	GColor front = (GColor8){.argb=colors_hours[t->tm_mon*2]};
+	text_layer_set_text_color(s_day_and_month_layer, front);
+#else
+	text_layer_set_text_color(s_day_and_month_layer, GColorWhite);
+#endif
+	text_layer_set_text(s_day_and_month_layer, day_and_month_buffer);
 }
 
 void set_weekday(struct tm *t) {
@@ -472,6 +499,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 
 	set_hour_and_minutes(t);
 	set_weekday(t);
+	set_day_and_month(t);
 }
 
 static void init_radii(void) {
