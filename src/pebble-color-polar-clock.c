@@ -361,16 +361,7 @@ static void main_window_unload(Window *window) {
 	text_layer_destroy(s_hour_layer);
 }
 
-static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-	time_t temp = time(NULL);
-
-	struct tm *t = localtime(&temp);
-	calcAngles(t);
-
-//	layer_mark_dirty(second_display_layer);
-	layer_mark_dirty(minute_display_layer);
-	layer_mark_dirty(hour_display_layer);
-
+void setHourAndMinutes(struct tm *t) {
 	static char buffer[] = "00";
 	if(!clock_is_24h_style()) {
 		strftime(buffer, sizeof("00"), "%I", t);
@@ -403,6 +394,19 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	text_layer_set_text_color(s_minute_layer, GColorWhite);
 #endif
 	text_layer_set_text(s_minute_layer, buffer_mins);
+}
+
+static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+	time_t temp = time(NULL);
+
+	struct tm *t = localtime(&temp);
+	calcAngles(t);
+
+//	layer_mark_dirty(second_display_layer);
+	layer_mark_dirty(minute_display_layer);
+	layer_mark_dirty(hour_display_layer);
+
+	setHourAndMinutes(t);
 }
 
 static void initRadii(void) {
