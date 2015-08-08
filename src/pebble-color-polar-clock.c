@@ -368,7 +368,11 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	layer_mark_dirty(hour_display_layer);
 
 	static char buffer[] = "00";
-	strftime(buffer, sizeof("00"), "%H", t);
+	if(!clock_is_24h_style()) {
+		strftime(buffer, sizeof("00"), "%I", t);
+	} else {
+		strftime(buffer, sizeof("00"), "%H", t);
+	}
 #ifdef PBL_COLOR
 	int index = t->tm_hour;
 	if(!clock_is_24h_style()) {
