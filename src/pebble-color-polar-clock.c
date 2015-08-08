@@ -35,6 +35,14 @@ const GPathInfo HOUR_SEGMENT_PATH_POINTS = {
 	}
 };
 
+const GPathInfo BATTERY_SEGMENT_PATH_POINTS = {
+	3,
+	(GPoint []) {
+		{0, 0},
+		{-9, -70}, // 70 = radius + fudge; 9 = 70*tan(3 degrees); 3 degrees per point;
+		{9,  -70},
+	}
+};
 //GPath *second_segment_path;
 //Layer *second_display_layer;
 
@@ -43,6 +51,9 @@ Layer *minute_display_layer;
 
 GPath *hour_segment_path;
 Layer *hour_display_layer;
+
+GPath *battery_segment_path;
+Layer *battery_display_layer;
 
 //#define SEE_VISUAL_MARKS 1
 
@@ -88,9 +99,11 @@ static int angle_90 = TRIG_MAX_ANGLE / 4;
 static int angle_180 = TRIG_MAX_ANGLE / 2;
 static int angle_270 = 3 * TRIG_MAX_ANGLE / 4;
 
-static int seconds_circle_outer_radius = 71, seconds_circle_inner_radius,
+static int battery_circle_outer_radius = 71, battery_circle_inner_radius,
+			//seconds_circle_outer_radius = 71, seconds_circle_inner_radius,
 			minutes_circle_outer_radius, minutes_circle_inner_radius,
 			hours_circle_outer_radius, hours_circle_inner_radius;
+#define BATTERY_CIRCLE_THICKNESS 2
 #define SECONDS_CIRCLE_THICKNESS 4
 #define MINUTES_CIRCLE_THICKNESS 1
 #define HOURS_CIRCLE_THICKNESS 2
@@ -149,6 +162,7 @@ static int current_language = LANG_ENGLISH;
 //static int32_t seconds_a, seconds_a1, seconds_a2;
 static int32_t minutes_a, minutes_a1, minutes_a2;
 static int32_t hour_a, hour_a1, hour_a2;
+static int32_t battery_a, battery_a1, battery_a2, battery_level;
 
 /*\
 |*| DrawArc function thanks to Cameron MacFarland (http://forums.getpebble.com/profile/12561/Cameron%20MacFarland)
@@ -284,6 +298,23 @@ static void calc_angles(struct tm *t) {
 	hour_a2 = -angle_90;
 }
 
+void handle_battery(BatteryChargeState charge_state) {
+	if (charge_state.is_charging) {
+	}
+
+	battery_a = TRIG_MAX_ANGLE * charge_state.charge_percent / 100 - angle_90;
+	battery_a2 = -angle_90;
+	battery_a1 = battery_a;
+	if(charge_state.charge_percent == 0) {
+		battery_a = TRIG_MAX_ANGLE * 1 / 100 -angle_90;
+		battery_a1 = battery_a;
+	}
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Battery_a: %d", (int)battery_a);
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "Charge_percent: %d", charge_state.charge_percent);
+	battery_level = charge_state.charge_percent;
+	layer_mark_dirty(battery_display_layer);
+}
+
 //void second_display_layer_update_callback(Layer *me, GContext* ctx) {
 //	GRect rect = layer_get_frame(me);
 //	GPoint center = grect_center_point(&rect);
@@ -304,6 +335,34 @@ static void calc_angles(struct tm *t) {
 //	graphics_fill_circle(ctx, center, seconds_circle_inner_radius);
 //	graphics_draw_arc(ctx, center, seconds_circle_outer_radius+1, SECONDS_CIRCLE_THICKNESS+2, seconds_a1, seconds_a2, GColorBlack);
 //}
+
+void battery_display_layer_update_callback(Layer *me, GContext* ctx) {
+	GRect rect = layer_get_frame(me);
+	GPoint center = grect_center_point(&rect);
+
+#ifdef PBL_COLOR
+	time_t temp = time(NULL);
+	struct tm *t = localtime(&temp);
+	GColor front;// = (GColor8){.argb=colors[t->tm_sec]};
+	if(battery_level < 10) {
+		front = GColorRed;
+	} else if (battery_level < 20) {
+		front = GColorYellow;
+	} else {
+		front = GColorGreen;
+	}
+#else
+	GColor front = GColorWhite;
+#endif
+
+	graphics_context_set_fill_color(ctx, front);
+
+	graphics_fill_circle(ctx, center, battery_circle_outer_radius);
+
+	graphics_context_set_fill_color(ctx, GColorBlack);
+	graphics_fill_circle(ctx, center, battery_circle_inner_radius);
+	graphics_draw_arc(ctx, center, battery_circle_outer_radius+1, BATTERY_CIRCLE_THICKNESS+2, battery_a1, battery_a2, GColorBlack);
+}
 
 void minute_display_layer_update_callback(Layer *me, GContext* ctx) {
 	GRect rect = layer_get_frame(me);
@@ -367,16 +426,25 @@ static void main_window_load(Window *window) {
 	window_y = layer_get_frame(window_get_root_layer(window)).size.h;
 #endif
 
+	GRect temp;
+
+	// Init the layer for the battery display
+	battery_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
+	temp = layer_get_frame(battery_display_layer);
+	gpath_move_to(battery_segment_path, grect_center_point(&temp));
+	layer_set_update_proc(battery_display_layer, &battery_display_layer_update_callback);
+	layer_add_child(window_get_root_layer(window), battery_display_layer);
+
 	// Init the layer for the second display
 	//second_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
-	//GRect temp = layer_get_frame(second_display_layer);
+	//temp = layer_get_frame(second_display_layer);
 	//gpath_move_to(second_segment_path, grect_center_point(&temp));
 	//layer_set_update_proc(second_display_layer, &second_display_layer_update_callback);
 	//layer_add_child(window_get_root_layer(window), second_display_layer);
 
 	// Init the layer for the minute display
 	minute_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
-	GRect temp = layer_get_frame(minute_display_layer);
+	temp = layer_get_frame(minute_display_layer);
 	gpath_move_to(minute_segment_path, grect_center_point(&temp));
 	layer_set_update_proc(minute_display_layer, &minute_display_layer_update_callback);
 	layer_add_child(window_get_root_layer(window), minute_display_layer);
@@ -415,6 +483,8 @@ static void main_window_load(Window *window) {
 	text_layer_set_font(s_day_and_month_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
 	text_layer_set_text_alignment(s_day_and_month_layer, GTextAlignmentCenter);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_and_month_layer));
+
+	battery_state_service_subscribe(handle_battery);
 }
 
 static void main_window_unload(Window *window) {
@@ -422,6 +492,7 @@ static void main_window_unload(Window *window) {
 	//layer_destroy(second_display_layer);
 	layer_destroy(minute_display_layer);
 	layer_destroy(hour_display_layer);
+	layer_destroy(battery_display_layer);
 	text_layer_destroy(s_minute_layer);
 	text_layer_destroy(s_hour_layer);
 	text_layer_destroy(s_weekday_layer);
@@ -496,16 +567,18 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 //	layer_mark_dirty(second_display_layer);
 	layer_mark_dirty(minute_display_layer);
 	layer_mark_dirty(hour_display_layer);
+	layer_mark_dirty(battery_display_layer);
 
 	set_hour_and_minutes(t);
 	set_weekday(t);
 	set_day_and_month(t);
+	handle_battery(battery_state_service_peek());
 }
 
 static void init_radii(void) {
-	seconds_circle_inner_radius = seconds_circle_outer_radius - SECONDS_CIRCLE_THICKNESS;
+	battery_circle_inner_radius = battery_circle_outer_radius - BATTERY_CIRCLE_THICKNESS;
 
-	minutes_circle_outer_radius = seconds_circle_inner_radius - CIRCLE_SPACE;
+	minutes_circle_outer_radius = battery_circle_inner_radius - CIRCLE_SPACE;
 	minutes_circle_inner_radius = minutes_circle_outer_radius - MINUTES_CIRCLE_THICKNESS;
 
 	hours_circle_outer_radius = minutes_circle_inner_radius - CIRCLE_SPACE;
@@ -520,6 +593,7 @@ static void init() {
 //	second_segment_path = gpath_create(&SECOND_SEGMENT_PATH_POINTS);
 	minute_segment_path = gpath_create(&MINUTE_SEGMENT_PATH_POINTS);
 	hour_segment_path = gpath_create(&HOUR_SEGMENT_PATH_POINTS);
+	battery_segment_path = gpath_create(&BATTERY_SEGMENT_PATH_POINTS);
 
 	init_radii();
 
@@ -540,6 +614,7 @@ static void deinit() {
 	window_destroy(s_main_window);
 	gpath_destroy(minute_segment_path);
 	gpath_destroy(hour_segment_path);
+	gpath_destroy(battery_segment_path);
 }
 
 int main(void) {
