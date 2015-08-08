@@ -233,9 +233,9 @@ static void calcAngles(struct tm *t) {
 	minutes_a1 = minutes_a;
 
 	if(!clock_is_24h_style()) {
-		hour_a = TRIG_MAX_ANGLE * (60*(t->tm_hour%12)+t->tm_min) / 720 - angle_90;
+		hour_a = (TRIG_MAX_ANGLE * ((60*(t->tm_hour%12)) + t->tm_min) / (60*12)) - angle_90;
 	} else {
-		hour_a = TRIG_MAX_ANGLE * (60*(t->tm_hour%24)+t->tm_min) / 720 - angle_90;
+		hour_a = (TRIG_MAX_ANGLE * ((60*t->tm_hour) + t->tm_min) / (60*24)) - angle_90;
 	}
 	hour_a1 = hour_a;
 	hour_a2 = -angle_90;
