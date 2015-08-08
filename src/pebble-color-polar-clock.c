@@ -350,6 +350,8 @@ void hour_display_layer_update_callback(Layer *me, GContext* ctx) {
 	graphics_draw_line(ctx, GPoint((window_x/2), 0), GPoint((window_x/2),window_y));
 	graphics_draw_line(ctx, GPoint((window_x/2)+15, 0), GPoint((window_x/2)+15,window_y));
 	graphics_draw_line(ctx, GPoint(0, window_y/2), GPoint(window_x,window_y/2));
+	graphics_draw_line(ctx, GPoint(0, (window_y/2)-25), GPoint(window_x,(window_y/2)-25));
+	graphics_draw_line(ctx, GPoint(0, (window_y/2)+25), GPoint(window_x,(window_y/2)+25));
 #endif
 }
 
