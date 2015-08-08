@@ -92,8 +92,8 @@ static int seconds_circle_outer_radius = 71, seconds_circle_inner_radius,
 			minutes_circle_outer_radius, minutes_circle_inner_radius,
 			hours_circle_outer_radius, hours_circle_inner_radius;
 #define SECONDS_CIRCLE_THICKNESS 4
-#define MINUTES_CIRCLE_THICKNESS 2
-#define HOURS_CIRCLE_THICKNESS 1
+#define MINUTES_CIRCLE_THICKNESS 1
+#define HOURS_CIRCLE_THICKNESS 2
 #define CIRCLE_SPACE 5
 
 #ifdef PBL_COLOR
