@@ -46,6 +46,16 @@ Layer *hour_display_layer;
 
 //int window_x, window_y;
 
+// Languages
+#define LANG_DUTCH 0
+#define LANG_ENGLISH 1
+#define LANG_FRENCH 2
+#define LANG_GERMAN 3
+#define LANG_SPANISH 4
+#define LANG_PORTUGUESE 5
+#define LANG_SWEDISH 6
+#define LANG_MAX 7
+
 #define HOUR_X 26
 #define HOUR_Y 56
 #define HOUR_W 60
@@ -57,6 +67,12 @@ TextLayer *s_hour_layer;
 #define MINUTE_W 55
 #define MINUTE_H 50
 TextLayer *s_minute_layer;
+
+#define WEEKDAY_X 45
+#define WEEKDAY_Y 36
+#define WEEKDAY_W 55
+#define WEEKDAY_H 50
+TextLayer *s_weekday_layer;
 
 static int angle_90 = TRIG_MAX_ANGLE / 4;
 static int angle_180 = TRIG_MAX_ANGLE / 2;
@@ -73,6 +89,7 @@ static int secondsCircleOuterRadius = 71, secondsCircleInnerRadius,
 #ifdef PBL_COLOR
 #define NBR_COLORS 60
 #define NBR_COLORS_HOURS 24
+#define NBR_COLORS_WEEKDAYS 7
 const uint8_t colors[NBR_COLORS] = {GColorTiffanyBlueARGB8, GColorTiffanyBlueARGB8, GColorCobaltBlueARGB8,
 	GColorCobaltBlueARGB8, GColorCobaltBlueARGB8, GColorVividCeruleanARGB8,
 	GColorBlueMoonARGB8, GColorBlueMoonARGB8, GColorBlueMoonARGB8,
@@ -103,7 +120,21 @@ const uint8_t colors_hours[NBR_COLORS_HOURS] = {GColorTiffanyBlueARGB8, GColorCo
 	GColorSpringBudARGB8, GColorBrightGreenARGB8, GColorGreenARGB8,
 	GColorMalachiteARGB8, GColorMediumSpringGreenARGB8, GColorJaegerGreenARGB8,
 };
+const uint8_t colors_weekdays[NBR_COLORS_WEEKDAYS] = {GColorTiffanyBlueARGB8, GColorBlueARGB8, GColorPurpleARGB8,
+	GColorRedARGB8, GColorOrangeARGB8, GColorChromeYellowARGB8,
+	GColorGreenARGB8,};
 #endif
+
+const char weekDay[LANG_MAX][7][6] = {
+	{ "zon", "maa", "din", "woe", "don", "vri", "zat" },// Dutch
+	{ "sun", "mon", "tue", "wed", "thu", "fri", "sat" },// English
+	{ "dim", "lun", "mar", "mer", "jeu", "ven", "sam" },// French
+	{ "son", "mon", "die", "mit", "don", "fre", "sam" },// German
+	{ "dom", "lun", "mar", "mie", "jue", "vie", "sab" },// Spanish
+	{ "dom", "seg", "ter", "qua", "qui", "sex", "sab" },// Portuguese
+	{ "sön", "mån", "Tis", "ons", "tor", "fre", "lör" } // Swedish
+};
+static int curLang = LANG_ENGLISH;
 
 static int32_t seconds_a, seconds_a1, seconds_a2, minutes_a, minutes_a1, minutes_a2, hour_a, hour_a1, hour_a2;
 
@@ -350,6 +381,13 @@ static void main_window_load(Window *window) {
 	text_layer_set_font(s_minute_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
 	text_layer_set_text_alignment(s_minute_layer, GTextAlignmentLeft);
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_minute_layer));
+
+	s_weekday_layer = text_layer_create(GRect(WEEKDAY_X, WEEKDAY_Y, WEEKDAY_W, WEEKDAY_H));
+	text_layer_set_background_color(s_weekday_layer, GColorClear);
+	text_layer_set_text_color(s_weekday_layer, GColorWhite);
+	text_layer_set_font(s_weekday_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+	text_layer_set_text_alignment(s_weekday_layer, GTextAlignmentCenter);
+	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_weekday_layer));
 }
 
 static void main_window_unload(Window *window) {
@@ -359,6 +397,18 @@ static void main_window_unload(Window *window) {
 	layer_destroy(hour_display_layer);
 	text_layer_destroy(s_minute_layer);
 	text_layer_destroy(s_hour_layer);
+}
+
+void setWeekday(struct tm *t) {
+	static char weekdayBuffer[] = "fri";
+	snprintf(weekdayBuffer, sizeof(weekdayBuffer), "%s", weekDay[curLang][t->tm_wday]);
+#ifdef PBL_COLOR
+	GColor front = (GColor8){.argb=colors_weekdays[t->tm_wday]};
+	text_layer_set_text_color(s_weekday_layer, front);
+#else
+	text_layer_set_text_color(s_weekday_layer, GColorWhite);
+#endif
+	text_layer_set_text(s_weekday_layer, weekdayBuffer);
 }
 
 void setHourAndMinutes(struct tm *t) {
@@ -407,6 +457,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	layer_mark_dirty(hour_display_layer);
 
 	setHourAndMinutes(t);
+	setWeekday(t);
 }
 
 static void initRadii(void) {
