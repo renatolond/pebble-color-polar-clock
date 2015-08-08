@@ -46,9 +46,9 @@ Layer *hour_display_layer;
 
 //int window_x, window_y;
 
-#define HOUR_X 31
+#define HOUR_X 26
 #define HOUR_Y 56
-#define HOUR_W 55
+#define HOUR_W 60
 #define HOUR_H 50
 TextLayer *s_hour_layer;
 
