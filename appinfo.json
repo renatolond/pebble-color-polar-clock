@@ -3,7 +3,7 @@
 	"shortName": "pebble-color-polar-clock",
 	"longName": "pebble-color-polar-clock",
 	"companyName": "Lond",
-	"versionLabel": "1.0",
+	"versionLabel": "1.1",
 	"sdkVersion": "3",
 	"targetPlatforms": ["aplite", "basalt"],
 	"watchapp": {
