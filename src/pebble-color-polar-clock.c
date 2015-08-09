@@ -436,6 +436,7 @@ static void main_window_load(Window *window) {
 	s_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CHARGING);
 	s_bitmap_layer = bitmap_layer_create(GRect(battery_charging_x, BATTERY_CHARGING_Y, BATTERY_CHARGING_W, BATTERY_CHARGING_H));
 	bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
+	layer_set_hidden(bitmap_layer_get_layer(s_bitmap_layer), true);
 	layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_layer));
 
 	GRect temp;
