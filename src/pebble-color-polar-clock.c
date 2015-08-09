@@ -165,10 +165,10 @@ const char weekdays[LANG_MAX][7][6] = {
 };
 static int current_language = LANG_ENGLISH;
 
-//static int32_t seconds_a, seconds_a1, seconds_a2;
-static int32_t minutes_a, minutes_a1, minutes_a2;
-static int32_t hour_a, hour_a1, hour_a2;
-static int32_t battery_a, battery_a1, battery_a2, battery_level;
+//static int32_t seconds_a1, seconds_a2;
+static int32_t minutes_a1, minutes_a2;
+static int32_t hour_a1, hour_a2;
+static int32_t battery_a1, battery_a2, battery_level;
 
 /*\
 |*| DrawArc function thanks to Cameron MacFarland (http://forums.getpebble.com/profile/12561/Cameron%20MacFarland)
@@ -287,20 +287,17 @@ static void graphics_draw_arc(GContext *ctx, GPoint center, int radius, int thic
 	}
 }
 static void calc_angles(struct tm *t) {
-//	seconds_a = TRIG_MAX_ANGLE * t->tm_sec / 60 - angle_90;
+//	seconds_a1 = TRIG_MAX_ANGLE * t->tm_sec / 60 - angle_90;
 //	seconds_a2 = -angle_90;
-//	seconds_a1 = seconds_a;
 
-	minutes_a = TRIG_MAX_ANGLE * t->tm_min / 60 - angle_90;
+	minutes_a1 = TRIG_MAX_ANGLE * t->tm_min / 60 - angle_90;
 	minutes_a2 = -angle_90;
-	minutes_a1 = minutes_a;
 
 	if(!clock_is_24h_style()) {
-		hour_a = (TRIG_MAX_ANGLE * ((60*(t->tm_hour%12)) + t->tm_min) / (60*12)) - angle_90;
+		hour_a1 = (TRIG_MAX_ANGLE * ((60*(t->tm_hour%12)) + t->tm_min) / (60*12)) - angle_90;
 	} else {
-		hour_a = (TRIG_MAX_ANGLE * ((60*t->tm_hour) + t->tm_min) / (60*24)) - angle_90;
+		hour_a1 = (TRIG_MAX_ANGLE * ((60*t->tm_hour) + t->tm_min) / (60*24)) - angle_90;
 	}
-	hour_a1 = hour_a;
 	hour_a2 = -angle_90;
 }
 
@@ -311,14 +308,12 @@ void handle_battery(BatteryChargeState charge_state) {
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "Battery charging...");
 		layer_set_hidden(bitmap_layer_get_layer(s_bitmap_layer), false);
 	} else {
-		battery_a = TRIG_MAX_ANGLE * charge_state.charge_percent / 100 - angle_90;
+		battery_a1 = TRIG_MAX_ANGLE * charge_state.charge_percent / 100 - angle_90;
 		battery_a2 = -angle_90;
-		battery_a1 = battery_a;
 		if(charge_state.charge_percent == 0) {
-			battery_a = 1-angle_90;
-			battery_a1 = battery_a;
+			battery_a1 = 1-angle_90;
 		}
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "Battery_a: %d", (int)battery_a);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "Battery_a1: %d", (int)battery_a1);
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "Charge_percent: %d", charge_state.charge_percent);
 		battery_level = charge_state.charge_percent;
 		layer_set_hidden(bitmap_layer_get_layer(s_bitmap_layer), true);
