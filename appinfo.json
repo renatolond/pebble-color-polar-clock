@@ -1,9 +1,9 @@
 {
 	"uuid": "2927541a-ec49-4535-87ce-20613388cf8e",
-	"shortName": "pebble-color-polar-clock",
-	"longName": "pebble-color-polar-clock",
+	"shortName": "Polar Clock",
+	"longName": "Lond's Color Polar Clock",
 	"companyName": "Lond",
-	"versionLabel": "1.1",
+	"versionLabel": "1.2",
 	"sdkVersion": "3",
 	"targetPlatforms": ["aplite", "basalt"],
 	"watchapp": {

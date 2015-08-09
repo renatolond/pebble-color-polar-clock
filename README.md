@@ -10,12 +10,12 @@ Features
 * Displays charging state as an icon in the top right part of the screen
 * Displays day of the week
 * Displays date with day and month
+* When the bluetooth connection is severed, display a little "no bluetooth" symbol at the top left part of the screen
 
 Planned
 -------
-* Bluetooth connection status
 * More languages for the day of the week and month name
- 
+
 Screenshots
 -----------
 ![screenshot aplite](screenshots/aplite1.png)
