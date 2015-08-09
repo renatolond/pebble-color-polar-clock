@@ -95,6 +95,12 @@ TextLayer *s_weekday_layer;
 #define DAY_AND_MONTH_H 50
 TextLayer *s_day_and_month_layer;
 
+#define BATTERY_CHARGING_Y 0
+#define BATTERY_CHARGING_W 16
+#define BATTERY_CHARGING_H 16
+static GBitmap* s_bitmap;
+static BitmapLayer *s_bitmap_layer;
+
 static int angle_90 = TRIG_MAX_ANGLE / 4;
 static int angle_180 = TRIG_MAX_ANGLE / 2;
 static int angle_270 = 3 * TRIG_MAX_ANGLE / 4;
@@ -300,19 +306,24 @@ static void calc_angles(struct tm *t) {
 
 void handle_battery(BatteryChargeState charge_state) {
 	if (charge_state.is_charging) {
-	}
-
-	battery_a = TRIG_MAX_ANGLE * charge_state.charge_percent / 100 - angle_90;
-	battery_a2 = -angle_90;
-	battery_a1 = battery_a;
-	if(charge_state.charge_percent == 0) {
-		battery_a = TRIG_MAX_ANGLE * 1 / 100 -angle_90;
+		battery_a1 = 1-angle_90;
+		battery_a2 = -angle_90;
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "Battery charging...");
+		layer_set_hidden(bitmap_layer_get_layer(s_bitmap_layer), false);
+	} else {
+		battery_a = TRIG_MAX_ANGLE * charge_state.charge_percent / 100 - angle_90;
+		battery_a2 = -angle_90;
 		battery_a1 = battery_a;
+		if(charge_state.charge_percent == 0) {
+			battery_a = 1-angle_90;
+			battery_a1 = battery_a;
+		}
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "Battery_a: %d", (int)battery_a);
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "Charge_percent: %d", charge_state.charge_percent);
+		battery_level = charge_state.charge_percent;
+		layer_set_hidden(bitmap_layer_get_layer(s_bitmap_layer), true);
+		layer_mark_dirty(battery_display_layer);
 	}
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "Battery_a: %d", (int)battery_a);
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "Charge_percent: %d", charge_state.charge_percent);
-	battery_level = charge_state.charge_percent;
-	layer_mark_dirty(battery_display_layer);
 }
 
 //void second_display_layer_update_callback(Layer *me, GContext* ctx) {
@@ -341,9 +352,7 @@ void battery_display_layer_update_callback(Layer *me, GContext* ctx) {
 	GPoint center = grect_center_point(&rect);
 
 #ifdef PBL_COLOR
-	time_t temp = time(NULL);
-	struct tm *t = localtime(&temp);
-	GColor front;// = (GColor8){.argb=colors[t->tm_sec]};
+	GColor front;
 	if(battery_level < 10) {
 		front = GColorRed;
 	} else if (battery_level < 20) {
@@ -421,68 +430,75 @@ void hour_display_layer_update_callback(Layer *me, GContext* ctx) {
 }
 
 static void main_window_load(Window *window) {
+	Layer *window_layer = window_get_root_layer(window);
+
 #ifdef SEE_VISUAL_MARKS
-	window_x = (layer_get_frame(window_get_root_layer(window)).size.w);
-	window_y = layer_get_frame(window_get_root_layer(window)).size.h;
+	window_x = (layer_get_frame(window_layer).size.w);
+	window_y = layer_get_frame(window_layer).size.h;
 #endif
 
-	GRect temp;
+	int battery_charging_x = layer_get_frame(window_layer).size.w - BATTERY_CHARGING_W;
+	s_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CHARGING);
+	s_bitmap_layer = bitmap_layer_create(GRect(battery_charging_x, BATTERY_CHARGING_Y, BATTERY_CHARGING_W, BATTERY_CHARGING_H));
+	bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
+	layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_layer));
 
+	GRect temp;
 	// Init the layer for the battery display
-	battery_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
+	battery_display_layer = layer_create(layer_get_frame(window_layer));
 	temp = layer_get_frame(battery_display_layer);
 	gpath_move_to(battery_segment_path, grect_center_point(&temp));
 	layer_set_update_proc(battery_display_layer, &battery_display_layer_update_callback);
-	layer_add_child(window_get_root_layer(window), battery_display_layer);
+	layer_add_child(window_layer, battery_display_layer);
 
 	// Init the layer for the second display
-	//second_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
+	//second_display_layer = layer_create(layer_get_frame(window_layer));
 	//temp = layer_get_frame(second_display_layer);
 	//gpath_move_to(second_segment_path, grect_center_point(&temp));
 	//layer_set_update_proc(second_display_layer, &second_display_layer_update_callback);
-	//layer_add_child(window_get_root_layer(window), second_display_layer);
+	//layer_add_child(window_layer, second_display_layer);
 
 	// Init the layer for the minute display
-	minute_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
+	minute_display_layer = layer_create(layer_get_frame(window_layer));
 	temp = layer_get_frame(minute_display_layer);
 	gpath_move_to(minute_segment_path, grect_center_point(&temp));
 	layer_set_update_proc(minute_display_layer, &minute_display_layer_update_callback);
-	layer_add_child(window_get_root_layer(window), minute_display_layer);
+	layer_add_child(window_layer, minute_display_layer);
 
 	// Init the layer for the hour display
-	hour_display_layer = layer_create(layer_get_frame(window_get_root_layer(window)));
+	hour_display_layer = layer_create(layer_get_frame(window_layer));
 	temp = layer_get_frame(hour_display_layer);
 	gpath_move_to(hour_segment_path, grect_center_point(&temp));
 	layer_set_update_proc(hour_display_layer, &hour_display_layer_update_callback);
-	layer_add_child(window_get_root_layer(window), hour_display_layer);
+	layer_add_child(window_layer, hour_display_layer);
 
 	s_hour_layer = text_layer_create(GRect(HOUR_X, HOUR_Y, HOUR_W, HOUR_H));
 	text_layer_set_background_color(s_hour_layer, GColorClear);
 	text_layer_set_text_color(s_hour_layer, GColorWhite);
 	text_layer_set_font(s_hour_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
 	text_layer_set_text_alignment(s_hour_layer, GTextAlignmentRight);
-	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_hour_layer));
+	layer_add_child(window_layer, text_layer_get_layer(s_hour_layer));
 
 	s_minute_layer = text_layer_create(GRect(MINUTE_X, MINUTE_Y, MINUTE_W, MINUTE_H));
 	text_layer_set_background_color(s_minute_layer, GColorClear);
 	text_layer_set_text_color(s_minute_layer, GColorWhite);
 	text_layer_set_font(s_minute_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
 	text_layer_set_text_alignment(s_minute_layer, GTextAlignmentLeft);
-	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_minute_layer));
+	layer_add_child(window_layer, text_layer_get_layer(s_minute_layer));
 
 	s_weekday_layer = text_layer_create(GRect(WEEKDAY_X, WEEKDAY_Y, WEEKDAY_W, WEEKDAY_H));
 	text_layer_set_background_color(s_weekday_layer, GColorClear);
 	text_layer_set_text_color(s_weekday_layer, GColorWhite);
 	text_layer_set_font(s_weekday_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
 	text_layer_set_text_alignment(s_weekday_layer, GTextAlignmentCenter);
-	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_weekday_layer));
+	layer_add_child(window_layer, text_layer_get_layer(s_weekday_layer));
 
 	s_day_and_month_layer = text_layer_create(GRect(DAY_AND_MONTH_X, DAY_AND_MONTH_Y, DAY_AND_MONTH_W, DAY_AND_MONTH_H));
 	text_layer_set_background_color(s_day_and_month_layer, GColorClear);
 	text_layer_set_text_color(s_day_and_month_layer, GColorWhite);
 	text_layer_set_font(s_day_and_month_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
 	text_layer_set_text_alignment(s_day_and_month_layer, GTextAlignmentCenter);
-	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_and_month_layer));
+	layer_add_child(window_layer, text_layer_get_layer(s_day_and_month_layer));
 
 	battery_state_service_subscribe(handle_battery);
 }
@@ -497,6 +513,8 @@ static void main_window_unload(Window *window) {
 	text_layer_destroy(s_hour_layer);
 	text_layer_destroy(s_weekday_layer);
 	text_layer_destroy(s_day_and_month_layer);
+	bitmap_layer_destroy(s_bitmap_layer);
+	gbitmap_destroy(s_bitmap);
 }
 
 void set_day_and_month(struct tm *t) {
