@@ -98,8 +98,8 @@ TextLayer *s_day_and_month_layer;
 #define BATTERY_CHARGING_Y 0
 #define BATTERY_CHARGING_W 16
 #define BATTERY_CHARGING_H 16
-static GBitmap* s_bitmap;
-static BitmapLayer *s_bitmap_layer;
+static GBitmap* s_bitmap_charging;
+static BitmapLayer *s_bitmap_charging_layer;
 
 static int angle_90 = TRIG_MAX_ANGLE / 4;
 static int angle_180 = TRIG_MAX_ANGLE / 2;
@@ -306,7 +306,7 @@ void handle_battery(BatteryChargeState charge_state) {
 		battery_a1 = 1-angle_90;
 		battery_a2 = -angle_90;
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "Battery charging...");
-		layer_set_hidden(bitmap_layer_get_layer(s_bitmap_layer), false);
+		layer_set_hidden(bitmap_layer_get_layer(s_bitmap_charging_layer), false);
 	} else {
 		battery_a1 = TRIG_MAX_ANGLE * charge_state.charge_percent / 100 - angle_90;
 		battery_a2 = -angle_90;
@@ -316,7 +316,7 @@ void handle_battery(BatteryChargeState charge_state) {
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "Battery_a1: %d", (int)battery_a1);
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "Charge_percent: %d", charge_state.charge_percent);
 		battery_level = charge_state.charge_percent;
-		layer_set_hidden(bitmap_layer_get_layer(s_bitmap_layer), true);
+		layer_set_hidden(bitmap_layer_get_layer(s_bitmap_charging_layer), true);
 		layer_mark_dirty(battery_display_layer);
 	}
 }
@@ -433,11 +433,11 @@ static void main_window_load(Window *window) {
 #endif
 
 	int battery_charging_x = layer_get_frame(window_layer).size.w - BATTERY_CHARGING_W;
-	s_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CHARGING);
-	s_bitmap_layer = bitmap_layer_create(GRect(battery_charging_x, BATTERY_CHARGING_Y, BATTERY_CHARGING_W, BATTERY_CHARGING_H));
-	bitmap_layer_set_bitmap(s_bitmap_layer, s_bitmap);
-	layer_set_hidden(bitmap_layer_get_layer(s_bitmap_layer), true);
-	layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_layer));
+	s_bitmap_charging = gbitmap_create_with_resource(RESOURCE_ID_CHARGING);
+	s_bitmap_charging_layer = bitmap_layer_create(GRect(battery_charging_x, BATTERY_CHARGING_Y, BATTERY_CHARGING_W, BATTERY_CHARGING_H));
+	bitmap_layer_set_bitmap(s_bitmap_charging_layer, s_bitmap_charging);
+	layer_set_hidden(bitmap_layer_get_layer(s_bitmap_charging_layer), true);
+	layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_charging_layer));
 
 	GRect temp;
 	// Init the layer for the battery display
@@ -509,8 +509,8 @@ static void main_window_unload(Window *window) {
 	text_layer_destroy(s_hour_layer);
 	text_layer_destroy(s_weekday_layer);
 	text_layer_destroy(s_day_and_month_layer);
-	bitmap_layer_destroy(s_bitmap_layer);
-	gbitmap_destroy(s_bitmap);
+	bitmap_layer_destroy(s_bitmap_charging_layer);
+	gbitmap_destroy(s_bitmap_charging);
 }
 
 void set_day_and_month(struct tm *t) {
