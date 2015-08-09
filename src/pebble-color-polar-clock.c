@@ -101,6 +101,13 @@ TextLayer *s_day_and_month_layer;
 static GBitmap* s_bitmap_charging;
 static BitmapLayer *s_bitmap_charging_layer;
 
+#define BLUETOOTH_ICON_X 0
+#define BLUETOOTH_ICON_Y 0
+#define BLUETOOTH_ICON_W 32
+#define BLUETOOTH_ICON_H 32
+static GBitmap* s_bitmap_bluetooth;
+static BitmapLayer *s_bitmap_bluetooth_layer;
+
 static int angle_90 = TRIG_MAX_ANGLE / 4;
 static int angle_180 = TRIG_MAX_ANGLE / 2;
 static int angle_270 = 3 * TRIG_MAX_ANGLE / 4;
@@ -301,6 +308,14 @@ static void calc_angles(struct tm *t) {
 	hour_a2 = -angle_90;
 }
 
+void handle_bluetooth(bool connected) {
+	if(connected) {
+		layer_set_hidden(bitmap_layer_get_layer(s_bitmap_bluetooth_layer), true);
+	} else {
+		layer_set_hidden(bitmap_layer_get_layer(s_bitmap_bluetooth_layer), false);
+	}
+}
+
 void handle_battery(BatteryChargeState charge_state) {
 	if (charge_state.is_charging) {
 		battery_a1 = 1-angle_90;
@@ -439,6 +454,12 @@ static void main_window_load(Window *window) {
 	layer_set_hidden(bitmap_layer_get_layer(s_bitmap_charging_layer), true);
 	layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_charging_layer));
 
+	s_bitmap_bluetooth = gbitmap_create_with_resource(RESOURCE_ID_BLUETOOTH);
+	s_bitmap_bluetooth_layer = bitmap_layer_create(GRect(BLUETOOTH_ICON_X, BLUETOOTH_ICON_Y, BLUETOOTH_ICON_W, BLUETOOTH_ICON_H));
+	bitmap_layer_set_bitmap(s_bitmap_bluetooth_layer, s_bitmap_bluetooth);
+	layer_set_hidden(bitmap_layer_get_layer(s_bitmap_bluetooth_layer), true);
+	layer_add_child(window_layer, bitmap_layer_get_layer(s_bitmap_bluetooth_layer));
+
 	GRect temp;
 	// Init the layer for the battery display
 	battery_display_layer = layer_create(layer_get_frame(window_layer));
@@ -497,6 +518,7 @@ static void main_window_load(Window *window) {
 	layer_add_child(window_layer, text_layer_get_layer(s_day_and_month_layer));
 
 	battery_state_service_subscribe(handle_battery);
+	bluetooth_connection_service_subscribe(handle_bluetooth);
 }
 
 static void main_window_unload(Window *window) {
@@ -511,6 +533,11 @@ static void main_window_unload(Window *window) {
 	text_layer_destroy(s_day_and_month_layer);
 	bitmap_layer_destroy(s_bitmap_charging_layer);
 	gbitmap_destroy(s_bitmap_charging);
+	bitmap_layer_destroy(s_bitmap_bluetooth_layer);
+	gbitmap_destroy(s_bitmap_bluetooth);
+
+	battery_state_service_unsubscribe();
+	bluetooth_connection_service_unsubscribe();
 }
 
 void set_day_and_month(struct tm *t) {
@@ -587,6 +614,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 	set_weekday(t);
 	set_day_and_month(t);
 	handle_battery(battery_state_service_peek());
+	handle_bluetooth(bluetooth_connection_service_peek());
 }
 
 static void init_radii(void) {

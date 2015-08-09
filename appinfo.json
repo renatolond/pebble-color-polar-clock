@@ -20,6 +20,11 @@
 				"file": "images/charging.png"
 			},
 			{
+				"type": "png",
+				"name": "BLUETOOTH",
+				"file": "images/bluetooth.png"
+			},
+			{
 				"menuIcon": true,
 				"type": "png",
 				"name": "IMAGE_MENU_ICON",
