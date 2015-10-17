@@ -71,40 +71,73 @@ int window_x, window_y;
 #define LANG_SWEDISH 6
 #define LANG_MAX 7
 
+#ifdef PBL_ROUND
+#define HOUR_X 44
+#define HOUR_Y 62
+#define HOUR_W 60
+#define HOUR_H 50
+
+#define MINUTE_X 106
+#define MINUTE_Y 72
+#define MINUTE_W 55
+#define MINUTE_H 50
+
+#define WEEKDAY_X 63
+#define WEEKDAY_Y 42
+#define WEEKDAY_W 55
+#define WEEKDAY_H 50
+
+#define DAY_AND_MONTH_X 40
+#define DAY_AND_MONTH_Y 99
+#define DAY_AND_MONTH_W 105
+#define DAY_AND_MONTH_H 50
+
+#define BLUETOOTH_ICON_X 10
+#define BLUETOOTH_ICON_Y 62
+#define BLUETOOTH_ICON_W 32
+#define BLUETOOTH_ICON_H 32
+
+#define BATTERY_CHARGING_Y 62
+#define BATTERY_CHARGING_W 16
+#define BATTERY_CHARGING_H 16
+#else
 #define HOUR_X 26
 #define HOUR_Y 56
 #define HOUR_W 60
 #define HOUR_H 50
-TextLayer *s_hour_layer;
 
 #define MINUTE_X 88
 #define MINUTE_Y 66
 #define MINUTE_W 55
 #define MINUTE_H 50
-TextLayer *s_minute_layer;
 
 #define WEEKDAY_X 45
 #define WEEKDAY_Y 36
 #define WEEKDAY_W 55
 #define WEEKDAY_H 50
-TextLayer *s_weekday_layer;
 
 #define DAY_AND_MONTH_X 22
 #define DAY_AND_MONTH_Y 93
 #define DAY_AND_MONTH_W 105
 #define DAY_AND_MONTH_H 50
-TextLayer *s_day_and_month_layer;
-
-#define BATTERY_CHARGING_Y 0
-#define BATTERY_CHARGING_W 16
-#define BATTERY_CHARGING_H 16
-static GBitmap* s_bitmap_charging;
-static BitmapLayer *s_bitmap_charging_layer;
 
 #define BLUETOOTH_ICON_X 0
 #define BLUETOOTH_ICON_Y 0
 #define BLUETOOTH_ICON_W 32
 #define BLUETOOTH_ICON_H 32
+
+#define BATTERY_CHARGING_Y 0
+#define BATTERY_CHARGING_W 16
+#define BATTERY_CHARGING_H 16
+#endif
+TextLayer *s_hour_layer;
+TextLayer *s_minute_layer;
+TextLayer *s_weekday_layer;
+TextLayer *s_day_and_month_layer;
+
+static GBitmap* s_bitmap_charging;
+static BitmapLayer *s_bitmap_charging_layer;
+
 static GBitmap* s_bitmap_bluetooth;
 static BitmapLayer *s_bitmap_bluetooth_layer;
 
@@ -112,7 +145,7 @@ static int angle_90 = TRIG_MAX_ANGLE / 4;
 static int angle_180 = TRIG_MAX_ANGLE / 2;
 static int angle_270 = 3 * TRIG_MAX_ANGLE / 4;
 
-static int battery_circle_outer_radius = 71, battery_circle_inner_radius,
+static int battery_circle_outer_radius = PBL_IF_ROUND_ELSE(87,71), battery_circle_inner_radius,
 			//seconds_circle_outer_radius = 71, seconds_circle_inner_radius,
 			minutes_circle_outer_radius, minutes_circle_inner_radius,
 			hours_circle_outer_radius, hours_circle_inner_radius;
@@ -180,7 +213,7 @@ static int32_t battery_a1, battery_a2, battery_level;
 /*\
 |*| DrawArc function thanks to Cameron MacFarland (http://forums.getpebble.com/profile/12561/Cameron%20MacFarland)
 \*/
-static void graphics_draw_arc(GContext *ctx, GPoint center, int radius, int thickness, int start_angle, int end_angle, GColor c) {
+static void cameron_graphics_draw_arc(GContext *ctx, GPoint center, int radius, int thickness, int start_angle, int end_angle, GColor c) {
 	int32_t xmin = 65535000, xmax = -65535000, ymin = 65535000, ymax = -65535000;
 	int32_t cosStart, sinStart, cosEnd, sinEnd;
 	int32_t r, t;
@@ -194,8 +227,8 @@ static void graphics_draw_arc(GContext *ctx, GPoint center, int radius, int thic
 	if (end_angle == 0) end_angle = TRIG_MAX_ANGLE;
 
 	if (start_angle > end_angle) {
-		graphics_draw_arc(ctx, center, radius, thickness, start_angle, TRIG_MAX_ANGLE, c);
-		graphics_draw_arc(ctx, center, radius, thickness, 0, end_angle, c);
+		cameron_graphics_draw_arc(ctx, center, radius, thickness, start_angle, TRIG_MAX_ANGLE, c);
+		cameron_graphics_draw_arc(ctx, center, radius, thickness, 0, end_angle, c);
 	} else {
 		// Calculate bounding box for the arc to be drawn
 		cosStart = cos_lookup(start_angle);
@@ -354,7 +387,7 @@ void handle_battery(BatteryChargeState charge_state) {
 //
 //	graphics_context_set_fill_color(ctx, GColorBlack);
 //	graphics_fill_circle(ctx, center, seconds_circle_inner_radius);
-//	graphics_draw_arc(ctx, center, seconds_circle_outer_radius+1, SECONDS_CIRCLE_THICKNESS+2, seconds_a1, seconds_a2, GColorBlack);
+//	cameron_graphics_draw_arc(ctx, center, seconds_circle_outer_radius+1, SECONDS_CIRCLE_THICKNESS+2, seconds_a1, seconds_a2, GColorBlack);
 //}
 
 void battery_display_layer_update_callback(Layer *me, GContext* ctx) {
@@ -380,7 +413,7 @@ void battery_display_layer_update_callback(Layer *me, GContext* ctx) {
 
 	graphics_context_set_fill_color(ctx, GColorBlack);
 	graphics_fill_circle(ctx, center, battery_circle_inner_radius);
-	graphics_draw_arc(ctx, center, battery_circle_outer_radius+1, BATTERY_CIRCLE_THICKNESS+2, battery_a1, battery_a2, GColorBlack);
+	cameron_graphics_draw_arc(ctx, center, battery_circle_outer_radius+1, BATTERY_CIRCLE_THICKNESS+2, battery_a1, battery_a2, GColorBlack);
 }
 
 void minute_display_layer_update_callback(Layer *me, GContext* ctx) {
@@ -401,7 +434,7 @@ void minute_display_layer_update_callback(Layer *me, GContext* ctx) {
 
 	graphics_context_set_fill_color(ctx, GColorBlack);
 	graphics_fill_circle(ctx, center, minutes_circle_inner_radius);
-	graphics_draw_arc(ctx, center, minutes_circle_outer_radius+1, MINUTES_CIRCLE_THICKNESS+2, minutes_a1, minutes_a2, GColorBlack);
+	cameron_graphics_draw_arc(ctx, center, minutes_circle_outer_radius+1, MINUTES_CIRCLE_THICKNESS+2, minutes_a1, minutes_a2, GColorBlack);
 }
 
 void hour_display_layer_update_callback(Layer *me, GContext* ctx) {
@@ -427,7 +460,7 @@ void hour_display_layer_update_callback(Layer *me, GContext* ctx) {
 
 	graphics_context_set_fill_color(ctx, GColorBlack);
 	graphics_fill_circle(ctx, center, hours_circle_inner_radius);
-	graphics_draw_arc(ctx, center, hours_circle_outer_radius+1, HOURS_CIRCLE_THICKNESS+2, hour_a1, hour_a2, GColorBlack);
+	cameron_graphics_draw_arc(ctx, center, hours_circle_outer_radius+1, HOURS_CIRCLE_THICKNESS+2, hour_a1, hour_a2, GColorBlack);
 
 #ifdef SEE_VISUAL_MARKS
 	graphics_context_set_stroke_color(ctx, GColorWhite);

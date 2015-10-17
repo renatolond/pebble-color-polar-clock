@@ -5,7 +5,7 @@
 	"companyName": "Lond",
 	"versionLabel": "1.2",
 	"sdkVersion": "3",
-	"targetPlatforms": ["aplite", "basalt"],
+	"targetPlatforms": ["aplite", "basalt", "chalk"],
 	"watchapp": {
 		"watchface": true
 	},
